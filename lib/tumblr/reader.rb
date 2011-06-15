@@ -40,14 +40,14 @@ class Tumblr
     
     # Transform ALL of the posts for user/group to Post objects.
     # This could take a while...
-    def get_all_posts(username, start = 0, total = nil)
-      first_read = authenticated_read(username, {:num => 50,:start => start}).perform
+    def get_all_posts(site, start = 0, total = nil)
+      first_read = read(site, {:num => 50,:start => start}).perform
       raise %Q(Tumblr response was not successful, "#{first_read.code}: #{first_read.message}") if !first_read.success?
       posts = self.class.get_posts(first_read)
       offset = start + posts.count
       post_total = total || first_read['tumblr']['posts']['total'].to_i
       if post_total > offset
-        posts |= get_all_posts(username, offset, post_total)
+        posts |= get_all_posts(site, offset, post_total)
       end
       posts
     end
@@ -76,8 +76,8 @@ class Tumblr
     end
     
     # Helper method to facilitate standard GET Read and Authenticated Read
-    def self.read(username, via = :get, params = {})
-      Weary.request("http://#{username}.tumblr.com/api/read/", via) do |req|
+    def self.read(site, via = :get, params = {})
+      Weary.request("http://#{site}/api/read/", via) do |req|
         req.with = params unless params.blank?
       end
     end
